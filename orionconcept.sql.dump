@@ -1,0 +1,223 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 11.1
+-- Dumped by pg_dump version 11.2
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: orionconcept; Type: DATABASE; Schema: -; Owner: postgres
+--
+
+CREATE DATABASE orionconcept WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'Russian_Russia.1251' LC_CTYPE = 'Russian_Russia.1251';
+
+
+ALTER DATABASE orionconcept OWNER TO postgres;
+
+\connect orionconcept
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+
+--
+-- Name: uuidlist; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.uuidlist AS (
+	uuid1 uuid,
+	uuid2 uuid,
+	uuid3 uuid,
+	uuid4 uuid,
+	uuid5 uuid,
+	uuid6 uuid,
+	uuid7 uuid,
+	uuid8 uuid,
+	uuid9 uuid,
+	uuid10 uuid
+);
+
+
+ALTER TYPE public.uuidlist OWNER TO postgres;
+
+--
+-- Name: uuidlisttemp; Type: TYPE; Schema: public; Owner: postgres
+--
+
+CREATE TYPE public.uuidlisttemp AS (
+	link1 uuid,
+	link2 uuid
+);
+
+
+ALTER TYPE public.uuidlisttemp OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
+--
+-- Name: ConceptX; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."ConceptX" (
+    "GUID" uuid NOT NULL,
+    "CPARENT" uuid,
+    "CCONCEPT" bigint NOT NULL,
+    "CPROP" integer NOT NULL,
+    "CNAME" character varying(80) NOT NULL,
+    "CUUID1" uuid,
+    "CUUID3" uuid,
+    "CUUID4" uuid,
+    "CINT1" bigint,
+    "CINT2" bigint,
+    "CBITS1" bigint,
+    "CBITS2" bigint,
+    "CFLOAT1" double precision,
+    "CFLOAT2" double precision,
+    "CCODE" character varying(40),
+    "CCHAR1" character varying(80),
+    "CCHAR2" character varying(80),
+    "CTXTBLOB" bytea,
+    "CDATETIME1" timestamp with time zone,
+    "CDATETIME2" time with time zone,
+    "CACCESS" integer,
+    "CDB" uuid,
+    "CPACK" bigint,
+    "COWNERDB" integer,
+    "CAUTHOR" uuid,
+    "CUSER" uuid,
+    "CPIC" uuid,
+    "СDATETIME" timestamp without time zone NOT NULL,
+    "CUUID2" public.uuidlist
+);
+
+
+ALTER TABLE public."ConceptX" OWNER TO postgres;
+
+--
+-- Name: ConfigX; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."ConfigX" (
+    "GUID" uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    "Conceptx" bigint,
+    "CName" character varying NOT NULL,
+    "ConceptID" bigint,
+    "CUUID1" uuid,
+    "FieldName" text,
+    "LabelName" text
+);
+
+
+ALTER TABLE public."ConfigX" OWNER TO postgres;
+
+--
+-- Name: SetsX; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."SetsX" (
+    "GUID" uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    "ConceptSetX" bigint,
+    "ConceptXGUID" uuid,
+    "GUID1" uuid
+);
+
+
+ALTER TABLE public."SetsX" OWNER TO postgres;
+
+--
+-- Data for Name: ConceptX; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public."ConceptX" VALUES ('5b05c7ce-24f5-4e25-9ef9-636e326cb53d', NULL, 3000, 255, 'Интерфейс', '11e9a56f-440f-4fff-8d02-d602f7993013', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', NULL, '2019-08-02 13:52:22.106813', NULL);
+INSERT INTO public."ConceptX" VALUES ('ff3190fb-abdb-4465-bb17-a372b29746c8', NULL, 8100, 255, 'Администраторы', '1c467754-e122-4dfe-908c-9863e7b3ba51', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', NULL, '2019-08-02 13:52:22.106813', NULL);
+INSERT INTO public."ConceptX" VALUES ('4d9841fc-b691-47a4-bc0b-02c7f505f1a2', NULL, 4000, 255, 'Пульты', '11e9a56f-440f-4fff-8d02-d602f7993013', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', NULL, '2019-08-02 13:52:22.106813', NULL);
+INSERT INTO public."ConceptX" VALUES ('dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', 'ff3190fb-abdb-4465-bb17-a372b29746c8', 8100, 255, 'Ильин', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', NULL, '2019-08-02 13:52:22.106813', NULL);
+INSERT INTO public."ConceptX" VALUES ('1c467754-e122-4dfe-908c-9863e7b3ba51', NULL, 8000, 255, 'Пользователи', '11e9a56f-440f-4fff-8d02-d602f7993013', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', NULL, '2019-08-02 13:52:22.106813', NULL);
+INSERT INTO public."ConceptX" VALUES ('92577d79-792e-4241-9ad6-237756c5c52e', NULL, 5000, 255, 'Приборы', '11e9a56f-440f-4fff-8d02-d602f7993013', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', NULL, '2019-08-02 13:52:22.106813', NULL);
+INSERT INTO public."ConceptX" VALUES ('72b45755-7780-4b2e-b6e1-aa3155ddfc44', NULL, 2000, 255, 'Компьютер', '11e9a56f-440f-4fff-8d02-d602f7993013', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', NULL, '2019-08-02 13:52:22.106813', NULL);
+INSERT INTO public."ConceptX" VALUES ('7f3bfb5b-ec4c-463f-ab1b-b5fe6929f026', NULL, 1000, 255, 'Cистема', '11e9a56f-440f-4fff-8d02-d602f7993013', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', NULL, '2019-08-02 13:52:22.106813', NULL);
+INSERT INTO public."ConceptX" VALUES ('6edaa612-1e64-4228-b18b-53000097eda7', NULL, 3000, 255, 'Ethernet', '5b05c7ce-24f5-4e25-9ef9-636e326cb53d', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', NULL, '2019-08-02 14:07:26.105813', NULL);
+INSERT INTO public."ConceptX" VALUES ('981a03a6-7a80-4847-8086-fcaee3f13c52', NULL, 3000, 255, 'Последовательный порт', '5b05c7ce-24f5-4e25-9ef9-636e326cb53d', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', NULL, '2019-08-02 14:02:40.378813', NULL);
+INSERT INTO public."ConceptX" VALUES ('b8f8b3e0-dd9b-4042-bdac-3bb29e8b8ac3', NULL, 5000, 255, 'C2000-4', '92577d79-792e-4241-9ad6-237756c5c52e', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', NULL, '2019-08-02 13:52:58.486813', NULL);
+INSERT INTO public."ConceptX" VALUES ('f494b638-0150-4bb1-a8cf-764b2ae6a2ca', NULL, 3000, 255, 'Radio', '5b05c7ce-24f5-4e25-9ef9-636e326cb53d', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', 'dba0960a-8fd4-4afb-8a2a-8b880c2b2f45', NULL, '2019-08-02 14:07:32.928813', NULL);
+
+
+--
+-- Data for Name: ConfigX; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public."ConfigX" VALUES ('56257076-2f7e-4ea9-83a3-3f83a52178bd', NULL, 'Справочники', 1, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('045cd362-883e-40be-bd0f-a41139ee6600', NULL, 'Наборы', 2, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('87d1e395-9050-413a-b978-2466e7749198', NULL, 'Метки полей', 3, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('11e9a56f-440f-4fff-8d02-d602f7993013', NULL, 'Настраиваемые', 4, '56257076-2f7e-4ea9-83a3-3f83a52178bd', NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('385c93cd-e0bd-47d8-95b6-f518eb6ddd0a', NULL, 'Ненастраиваемые', 5, '56257076-2f7e-4ea9-83a3-3f83a52178bd', NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('ec58c9a5-40d2-4f8e-a020-0fbf5b5a4a09', NULL, 'Система', 1000, NULL, NULL, NULL);
+
+
+--
+-- Data for Name: SetsX; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public."SetsX" VALUES ('571c6c31-5569-4619-aa14-0157d989f151', 100100, '24227921-6d86-4bed-9654-310a5e28b408', '24227921-6d86-4bed-9654-310a5e28b408');
+
+
+--
+-- Name: ConceptX ConceptX_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."ConceptX"
+    ADD CONSTRAINT "ConceptX_pkey" PRIMARY KEY ("GUID");
+
+
+--
+-- Name: ConfigX ConfigX_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."ConfigX"
+    ADD CONSTRAINT "ConfigX_pkey" PRIMARY KEY ("GUID");
+
+
+--
+-- Name: SetsX SetsX_GUID_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."SetsX"
+    ADD CONSTRAINT "SetsX_GUID_key" UNIQUE ("GUID");
+
+
+--
+-- PostgreSQL database dump complete
+--
+
