@@ -1,0 +1,29 @@
+-- SELECT
+-- 	"Conf"
+-- FROM "public"."ConfigX"
+-- WHERE "Conf" IS NOT NULL;
+
+-- SELECT "CNAME" FROM "ConceptX" WHERE "CCONCEPT" = 150000;
+-- CREATE DATABASE orionxrelease WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE = 'Russian_Russia.1251' LC_CTYPE = 'Russian_Russia.1251';
+
+--SELECT "CNAME" FROM "ConceptX" WHERE "CCONCEPT" = 150000;
+-- ALTER DATABASE orionxrelease OWNER TO postgres;
+
+
+SELECT keys."ISetName" AS keyOfEmployee, 
+iKey."IName" AS nameOfKey, 
+sSection."ISetName" AS nameOfAuthority , 
+circuit."ISetName" AS circuitOfSection, 
+circuitName."IName" AS nameOfCircuit    
+FROM "ISetX" keys
+INNER JOIN "InstanceX" sotr
+ON keys."ISOWNER" = sotr."IUUID" AND keys."ISConcept" = 400200
+INNER JOIN "InstanceX" iKey
+ON iKey."IUUID" = keys."ISUUID1"
+INNER JOIN "ISetX" sSection 
+ON sSection."ISOWNER" = iKey."IUUID1"  AND sSection."ISConcept" = 400100
+INNER JOIN "ISetX" circuit
+ON circuit."ISOWNER" = sSection."ISUUID1" AND circuit."ISConcept" = 500100
+INNER JOIN "InstanceX" circuitName
+ON circuitName."IUUID" = circuit."ISUUID1"
+WHERE sotr."IName" LIKE '%Иван%';
