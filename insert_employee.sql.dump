@@ -1,67 +1,82 @@
 DO $$
 DECLARE
-	 i INTEGER;
-	 owner_uuid UUID; /* объявили переменную */
-	  sets_uuid UUID;
-	  circuit_uuid UUID;
-	  section_uuid UUID;
-	  auth_uuid UUID;
-	  iname text;
-	  auth_name text;
+	i INTEGER;
+	offset_section INT;
+	owner_uuid UUID;
+	sets_uuid UUID;
+	circuit_uuid UUID;
+	section_uuid UUID;
+	section_name TEXT;
+	auth_uuid UUID;
+	iname text;
+	auth_name text;
+	emp_arr_name TEXT ARRAY;
+	emp_name TEXT;
 	 
 BEGIN
 	i := 0;
+	offset_section := 0;
+	emp_arr_name := '{"Иванов", "Петров", "Сидоров", "Синицын"}'; 
+	
+	-- генерируем уровни доступа
    FOR counterA IN 1..5 LOOP
    		INSERT INTO "InstanceX"  ("IUUID", "IName", "IType", "IConcept") 
 		VALUES (uuid_generate_v4(), 'Уровень доступа_' || cast(counterA as TEXT), '00000000-0000-0000-0000-000003000000', 300000);
    END LOOP;
-   FOR counter IN 1..2 LOOP
-   -- i := i + 1;
+   
+   -- генерируем сотрудников
+   FOR counter IN 1..5 LOOP
+   emp_name := (select (emp_arr_name)[floor(random() * 4 + 1)]);
 	   INSERT INTO "InstanceX" ("IUUID", "IParent", "IName", "IConcept", "IType" ) 
-			VALUES (uuid_generate_v4(), '00000000-0000-0000-0000-000000008011', 'Петров_' || cast(counter as TEXT),  
+			VALUES (uuid_generate_v4(), '00000000-0000-0000-0000-000000008011',  emp_name || '_' || cast(counter as TEXT),  
 					8200, '00000000-0000-0000-0000-000000008001')
 					 RETURNING "IUUID" INTO owner_uuid;
+					 
+	   -- генерируем брелки(ключи) по 5 на сотрудника, назначем ему уровень доступа по random
 	   FOR keys IN 1..3 LOOP
-	   		INSERT INTO "InstanceX"  ("IUUID", "IName", "IType", "IINT1", "IUUID1") 
-			VALUES (uuid_generate_v4(),  'Брелок_' || cast(counter as TEXT), 
-			'00000000-0000-0000-0000-000002000001', counter, (select "IUUID" from  "InstanceX" WHERE "IConcept" = 300000 order by random() limit 1))
+			INSERT INTO "InstanceX"  ("IUUID", "IName", "IType", "IINT1", "IUUID1") 
+			VALUES (uuid_generate_v4(),  'Брелок_' || cast((counter*10)+keys as TEXT), 
+			'00000000-0000-0000-0000-000002000001', (counter*10) + keys, (select "IUUID" from  "InstanceX" WHERE "IConcept" = 300000 order by random() limit 1))
 			RETURNING "IUUID" INTO sets_uuid;
 			
+			-- связываем сгенерированный брелок и сотрудника (пока сколько сотрудников, столько связей)
 			INSERT INTO "ISetX" ("ISUUID", "ISetName", "ISOWNER", "ISUUID1", "ISConcept") 
-			VALUES (uuid_generate_v4(), 'Брелок на Петрове_' || cast(counter as TEXT) , owner_uuid, sets_uuid, 400200);
-			
+			VALUES (uuid_generate_v4(), 'Брелок ' || cast((counter*10) + keys as TEXT) || ' на ' || (SELECT "IName" FROM "InstanceX" WHERE "IUUID" = owner_uuid), owner_uuid, sets_uuid, 400200);														   
 	   END LOOP;
 	END LOOP;
-	FOR counterS IN 1..2 LOOP
+	
+	-- генерируем разделы
+	FOR counterS IN 1..100 LOOP
 		INSERT INTO "InstanceX"  ("IUUID", "IName", "IType") 
 		VALUES (uuid_generate_v4(),  'Раздел_' || cast(counterS as TEXT), '00000000-0000-0000-0001-000000007001')
 		RETURNING "IUUID" INTO section_uuid;
-		
+		-- генерируем шлейфы на каждый раздел
 		FOR counterС IN 1..4 LOOP
 			INSERT INTO "InstanceX"  ("IUUID", "IName", "IType") 
 			VALUES (uuid_generate_v4(),  'Шлейф_' || cast(counterС as TEXT), '24227921-6d86-4bed-9654-310a5e28b408')
 			RETURNING "IUUID" INTO circuit_uuid;
-			
+			-- связываем разделы (владелец) с шлейфами (набор шлейфов для раздела)	
 			INSERT INTO "ISetX" ("ISUUID", "ISetName", "ISOWNER", "ISUUID1", "ISConcept") 
 			VALUES (uuid_generate_v4(), 'Шлейф_' || cast(counterС as TEXT) || ' на Разделе_' ||  cast(counterS as TEXT), section_uuid, circuit_uuid, 500100);
 			
 		END LOOP;	
 	END LOOP;
+															  
 	-- связь УД --> Раздел
+	-- забираем все уровни доступа, идем по ним циклом
 	FOR auth_uuid, auth_name IN 
-			SELECT "IUUID", "IName" FROM "InstanceX" WHERE "IConcept" = 300000
-			LOOP
-				FOR i IN 1..10
-					LOOP 
-						INSERT INTO "ISetX" ("ISUUID", "ISetName", "ISOWNER", "ISUUID1", "ISConcept") 
-						VALUES (uuid_generate_v4(), 'Раздел_ на ' || auth_name , auth_uuid, 
-						(select "IUUID" from  "InstanceX" WHERE "IType" = '00000000-0000-0000-0001-000000007001' order by random() limit 1),
-						400100);
-					END LOOP;
-			END LOOP;
+		SELECT "IUUID", "IName" FROM "InstanceX" WHERE "IConcept" = 300000
+		LOOP
+			-- забираем разделы в количестве 10 с offset 
+			FOR section_uuid, section_name IN
+				SELECT "IUUID", "IName" FROM  "InstanceX" WHERE "IType" = '00000000-0000-0000-0001-000000007001' OFFSET offset_section  LIMIT 10
+				LOOP 
+					INSERT INTO "ISetX" ("ISUUID", "ISetName", "ISOWNER", "ISUUID1", "ISConcept") 
+					VALUES (uuid_generate_v4(),  section_name || ' на ' || auth_name , auth_uuid, section_uuid, 400100);
+				END LOOP;
+				offset_section := offset_section + 10;
+		END LOOP;
 	
-   -- RAISE NOTICE 'Counter: %', counter;
-   -- RAISE NOTICE 'i %', i;
-   
+   -- RAISE NOTICE 'Counter: %', counter;   
 END; 
 $$ LANGUAGE plpgsql;
