@@ -1,4 +1,4 @@
-DO $$ 
+DO $$  
 DECLARE
 	-- количество
 	count_levelAuthority INT;
@@ -21,10 +21,12 @@ DECLARE
 	 
 BEGIN
 	-- устанавливаем первоначальные значения для количества записей
-	count_levelAuthority := 10;
-	count_employees := 10;
-	count_keys := 2;
-	count_section := 5;
+	-- уровни доступа
+	count_levelAuthority := 500;
+	count_employees := 50000;
+	count_keys := 4;
+	-- разделы
+	count_section := 50000;
 	
 	
 	i := 0;
