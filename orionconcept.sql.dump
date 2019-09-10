@@ -32,6 +32,21 @@ DROP TYPE public.uuidlisttemp;
 DROP TYPE public.uuidlist;
 DROP EXTENSION "uuid-ossp";
 DROP EXTENSION tablefunc;
+DROP EXTENSION citext;
+--
+-- Name: citext; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION citext; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION citext IS 'data type for case-insensitive character strings';
+
+
 --
 -- Name: tablefunc; Type: EXTENSION; Schema: -; Owner: 
 --
@@ -150,7 +165,9 @@ CREATE TABLE public."ConfigX" (
     "FieldName" text,
     "CFConf" jsonb,
     "CFEngName" character varying(2044),
-    "CFIcon" bytea
+    "CFIcon" bytea,
+    "CFFlag" integer,
+    "CFParent" uuid
 );
 
 
@@ -215,7 +232,13 @@ ALTER TABLE public."SetX" OWNER TO postgres;
 
 CREATE TABLE public."TreeX" (
     "TUUID" uuid NOT NULL,
-    "TName" uuid NOT NULL
+    "TName" character varying(80) NOT NULL,
+    "TOWNER" uuid,
+    "TCONCEPT" bigint,
+    "TNODE" uuid,
+    "TPARENT" uuid,
+    "TVAL" uuid,
+    "TDB" uuid
 );
 
 
@@ -296,35 +319,41 @@ INSERT INTO public."ConceptX" VALUES ('00000000-0000-0000-0000-000000008002', NU
 -- Data for Name: ConfigX; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000000003', NULL, 'Метки полей', 3, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000000001', NULL, 'Справочники', 1, NULL, NULL, '{}', 'References', NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000001000', 1, 'Системы', 1000, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000002000', 1, 'Компьютеры', 2000, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000003000', 1, 'Интерфейсы', 3000, NULL, NULL, '{"Bits": {}, "Links": {}, "Labels": {"CINT1": "Порт", "CUUID1": "Тип ПИ", "CUUID2": "Тип протокола", "CUUID3": "Скорость порта", "CTXTBLOB": "Описание"}, "Formats": {}, "MenuSet": {}, "Defaults": {}, "Editable": {}, "Visibility": {}, "DesignTable": {}, "MenuActionSet": {}, "DesignRefRowsForm": {}, "DesignRefGroupsForm": {}}', 'Interfaces', NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000004000', 1, 'Пульты', 4000, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000005000', 1, 'Приборы', 5000, NULL, NULL, '{"Bits": {}, "Links": {}, "Labels": {"CINT1": "Адрес"}, "Formats": {}, "MenuSet": {}, "Defaults": {}, "Editable": {}, "Visibility": {}, "DesignTable": {}, "MenuActionSet": {}, "DesignRefRowsForm": {}, "DesignRefGroupsForm": {}}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000006000', 1, 'Устройства', 6000, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000007000', 1, 'Разделы', 7000, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000008000', 1, 'Пользователи', 8000, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000009000', 1, 'Преобразователи интерфесов', 9000, NULL, NULL, '{}', 'Interface converters', NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000010000', 1, 'Протоколы', 10000, NULL, NULL, '{}', 'Protocols', NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000011000', 1, 'Скорости передачи данных', 11000, NULL, NULL, '{}', 'Data transfer speed', NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000170000', 1, 'Режимы прохода', 170000, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000130000', 1, 'Режимы работ', 130000, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000140000', 1, 'Виды интерфейсов', 140000, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000160000', 1, 'Дежурные режимы', 160000, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000180000', 1, 'Типы ключей', 180000, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000190000', 1, 'Режимы antipassback', 190000, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000005001', 1, 'C2000-2', 5001, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000002000000', 1, 'Типы ключей доступа', 200000, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000003000000', 1, 'Уровни доступа', 300000, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000000002', NULL, 'Наборы на справочниках', 2, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000000004', NULL, 'Наборы на экземплярах', 4, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000400100', 4, 'Набор управление', 400100, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000400200', 4, 'Набор ключей на сотруднике', 400200, NULL, NULL, '{"SIUUID2": "Уровень доступа"}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000500100', 4, 'Наборы входов', 500100, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000000005', NULL, 'Структуры деревьев', 5, NULL, NULL, '{}', NULL, NULL);
-INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000150000', 1, 'Битовые признаки', 150000, NULL, NULL, '{"Type": "Chbx", "Labels": {"CINT1": "Значение признака"}}', NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000000003', NULL, 'Метки полей', 3, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000001000', 1, 'Системы', 1000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000002000', 1, 'Компьютеры', 2000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000003000', 1, 'Интерфейсы', 3000, NULL, NULL, '{"Bits": {}, "Links": {}, "Labels": {"CINT1": "Порт", "CUUID1": "Тип ПИ", "CUUID2": "Тип протокола", "CUUID3": "Скорость порта", "CTXTBLOB": "Описание"}, "Formats": {}, "MenuSet": {}, "Defaults": {}, "Editable": {}, "Visibility": {}, "DesignTable": {}, "MenuActionSet": {}, "DesignRefRowsForm": {}, "DesignRefGroupsForm": {}}', 'Interfaces', NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000004000', 1, 'Пульты', 4000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000006000', 1, 'Устройства', 6000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000007000', 1, 'Разделы', 7000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000008000', 1, 'Пользователи', 8000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000009000', 1, 'Преобразователи интерфесов', 9000, NULL, NULL, '{}', 'Interface converters', NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000010000', 1, 'Протоколы', 10000, NULL, NULL, '{}', 'Protocols', NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000011000', 1, 'Скорости передачи данных', 11000, NULL, NULL, '{}', 'Data transfer speed', NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000170000', 1, 'Режимы прохода', 170000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000130000', 1, 'Режимы работ', 130000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000140000', 1, 'Виды интерфейсов', 140000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000160000', 1, 'Дежурные режимы', 160000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000190000', 1, 'Режимы antipassback', 190000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000005001', 1, 'C2000-2', 5001, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000002000000', 1, 'Типы ключей доступа', 200000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000003000000', 1, 'Уровни доступа', 300000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000000002', NULL, 'Наборы на справочниках', 2, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000000004', NULL, 'Наборы на экземплярах', 4, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000400100', 4, 'Набор управление', 400100, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000400200', 4, 'Набор ключей на сотруднике', 400200, NULL, NULL, '{"SIUUID2": "Уровень доступа"}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000500100', 4, 'Наборы входов', 500100, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000000005', NULL, 'Структуры деревьев', 5, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000150000', 1, 'Битовые признаки', 150000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('5ca14598-eb1d-495d-949b-de02b81b6a2a', 5, 'Структура управления', 999666, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('4d2ed750-c3ee-437a-acbc-bb462e4c6229', 5, 'Разделы', 999666, NULL, NULL, '{"Type": 0, "Flags": 3, "Query": "SELECT \"IUUID\", \"IName\" FROM public.\"InstanceX\" WHERE  \"IConcept\" = 7000"}', NULL, NULL, NULL, '5ca14598-eb1d-495d-949b-de02b81b6a2a');
+INSERT INTO public."ConfigX" VALUES ('ebd8d5f2-ddbf-4918-b19e-a6286a689db3', 2, 'Набор входов', 200000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000005000', 1, 'Приборы', 5000, NULL, NULL, '{"Bits": {}, "SetX": [200000, 200100], "Links": {}, "Labels": {"CINT1": "Адрес"}, "Formats": {}, "MenuSet": {}, "Defaults": {}, "Editable": {}, "Visibility": {}, "DesignTable": {}, "MenuActionSet": {}, "DesignRefRowsForm": {}, "DesignRefGroupsForm": {}}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('42808e40-08a5-409d-819a-b4debbb48a88', 2, 'Набор выходов', 200100, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000180000', 1, 'Типы ключей', 180000, NULL, NULL, '{"VISIBILITY": [" CNAME", " CINT1"]}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('d2c5a6a9-a00a-430f-8d66-4a5dc2232cad', NULL, 'Дизайн формы записи справочника', 6, NULL, NULL, '{"LABELS": ""}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('b5855e9b-e30f-47f1-a94e-df9a17d451b5', 6, 'Дизайн формы типа прибора', 600000, NULL, NULL, '{}', NULL, NULL, NULL, NULL);
+INSERT INTO public."ConfigX" VALUES ('00000000-0000-0000-0000-000000000001', NULL, 'Справочники', 1, NULL, NULL, '[{"NAME": "VISIBILITY", "HEADERS": ["One", "Two"]}, {"NAME": "LABELS"}]', 'References', NULL, NULL, NULL);
 
 
 --
@@ -16594,6 +16623,8 @@ INSERT INTO public."SetX" VALUES ('571c6c31-5569-4619-aa14-0157d989f151', 100000
 -- Data for Name: TreeX; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
+INSERT INTO public."TreeX" VALUES ('d8e90348-1f79-4b24-b6da-da3c53ad84ed', 'Предприятие', NULL, 999666, '5ca14598-eb1d-495d-949b-de02b81b6a2a', NULL, NULL, NULL);
+INSERT INTO public."TreeX" VALUES ('4f414221-25ae-4203-88d2-defb31eb0d90', 'Первый этаж', NULL, 999666, '4d2ed750-c3ee-437a-acbc-bb462e4c6229', 'd8e90348-1f79-4b24-b6da-da3c53ad84ed', '73d92d05-1033-4878-8422-bdf1ab33fade', NULL);
 
 
 --
