@@ -1,2 +1,5 @@
 *.work
 *.sql
+*.lock
+*~.lock
+.~lock.*.xls*
