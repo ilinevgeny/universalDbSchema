@@ -1,69 +1,146 @@
--- заносить в setX надо скриптом
--- suuid - генерируемый
--- sconcept - хардкод
--- SOwner - select from CConcept where CConcept in Select  CFConceptExt from ConfigX ();
--- SName - select from ConceptX where CConcept = 2400
-
-
---INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
---VALUES (NEWID(), 20000400, '00000000-0000-0000-0000-000000012001', 'address', '00000000-0000-0000-0000-000000002400', '00000000-0000-0000-0000-000000002001', NULL, NULL, 'Адрес') ;
-
+-- Проверка результатов
 -- SELECT CUUID, CName, CText1, CConcept FROM dde_ConceptX WHERE CConcept = 2400 AND (CName = 'address'
 --                                       OR CName = 'version' OR CName = 'd_index' OR CName = 'description'
 --                                       OR CName = 'priority' OR CName = 'contactId_zone' OR CName = 'time_window');
-
 -- SELECT dde_ConceptX.CUUID from dde_ConceptX WHERE CConcept IN (SELECT CFConceptExt FROM dde_ConfigX WHERE CFConceptExt >= 5000 AND CFConceptExt < 50000);
 -- SELECT CFConceptExt FROM dde_ConfigX WHERE CFConceptExt > 5000 AND CFConcept < 50000;
 SELECT count(CUUID) FROM dde_ConceptX WHERE CConcept = 3600;
 
-IF (SELECT count(dde_SetX.SUUID) FROM dde_SetX WHERE SConcept = 2000400 AND SOwner = '00000000-0000-0000-0000-000000005101') <= 0
-    print 'not exists';
+-- IF (SELECT count(dde_SetX.SUUID) FROM dde_SetX WHERE SConcept = 2000400 AND SOwner = '00000000-0000-0000-0000-000000005101') <= 0
+--     print 'not exists';
 
 GO
 /*
     1. генерация наборов параметров для приборов, индентификаторами являются значения CName из ConceptX
     2. генерация наборов входов
-
     TODO: сгенерировать 144 набора для всех типов входов
+    TODO: сгенерировать концепт "Тактики"
+    TODO: сгенерировать набор для типов входов
     TODO: сгенерировать наборы приборов со входами (условие количества входов - тип прибора), дефолтный тип входа - охранный
     TODO: сгенерировать наборы приборов с выходами (разница в типах выходов)
     TODO: сгенерировать наборы считывателей (уточнить ТИП считывателя)
+    TODO: проверка на наличие записей наборов (типов входов, типов выходов, считывателей, типов приборов), каждый запуск должен только добавлять из ConceptX
+
+    -- тактика - отдельный концепт
+    -- задержка управления реле (relay_control_delay), время управления реле(relay_control_time) (выход): тип float, значение кратно 0,125 мс, в АБД значения округляются
  */
+
 /* задаем общие переменные генерации */
 
-DECLARE @CUUID_device_owner uniqueidentifier;
-DECLARE @CConcept_device bigint;
 DECLARE @CUUID1 uniqueidentifier;
 DECLARE @CUUID2 uniqueidentifier;
+DECLARE @CUUID3 uniqueidentifier;
 DECLARE @CName nvarchar(MAX);
 DECLARE @CText1 nvarchar(MAX);
-DECLARE @Concept_device_params bigint = 2400; -- концепт для набора параметров прибора
-DECLARE @Concept_enters_params bigint = 3600; -- концепт для набора входов прибора, по умолчанию - охранный
 
-DECLARE enters_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_enters_params;
+/* Генерация концепта Тактики (2700) */
+
+
+DECLARE @Concept_enters_params bigint = 2500; -- концепт для набора входов прибора, по умолчанию - охранный
+DECLARE @Concept_enters bigint = 3600; -- концепт для набора входов прибора, по умолчанию - охранный
+
+-- ГЕНЕРАЦИЯ ТИПОВ ВХОДА (3600) --
+DECLARE enters_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_enters;
+DECLARE @CUUID_enter_type_owner uniqueidentifier;
 OPEN enters_cursor;
-FETCH NEXT FROM enters_cursor INTO @CUUID1, @CName, @CText1;
+FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @CName, @CText1;
+WHILE @@FETCH_STATUS = 0
+    BEGIN
+       --ГЕНЕРАЦИЯ  НАБОРА ПАРАМЕТРОВ ДЛЯ КАЖДОГО ТИПА ВХОДА --
+        DECLARE params_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_enters_params
+        OPEN params_cursor;
+        FETCH NEXT FROM params_cursor INTO @CUUID1, @CName, @CText1;
+        WHILE @@FETCH_STATUS = 0
+            BEGIN
+                IF @CName = 'device_address' OR @CName = 'number' OR @CName = 'user_number' OR @CName = 'contactId_zone'
+                    BEGIN
+                        SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'int');
+                    --print @CUUID2;
+                    END
+                IF @CName = 'name' OR @CName = 'description' OR @CName = 'type'
+                    BEGIN
+                        SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'nvarchar');
+                    END
+                 IF @CName = 'statistic_summary' OR @CName = 'zone_day'
+                    BEGIN
+                        SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'bool');
+                    END
+               -- IF (SELECT count(dde_SetX.SUUID) FROM dde_SetX WHERE SConcept = 2000600 AND  SOwner = @CUUID_enter_type_owner) <= 0
+                    INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
+                        VALUES (NEWID(), 2000600, @CUUID_enter_type_owner, @CName, @CUUID1, @CUUID2, NULL, NULL, @CText1);
+
+                --print @CUUID1;
+            FETCH NEXT FROM params_cursor INTO @CUUID1, @CName, @CText1;
+            END
+            close params_cursor;
+            DEALLOCATE params_cursor;
+       FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @CName, @CText1;
+   END
 CLOSE enters_cursor;
 deallocate enters_cursor;
-/*
- TODO: сгенерировать 144 набора для всех типов входов
- */
 
+
+-- ГЕНЕРАЦИЯ ТИПОВ ВЫХОДОВ (3700) --
+DECLARE enters_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_enters;
+DECLARE @CUUID_enter_type_owner uniqueidentifier;
+SET @Concept_enters = 3700;
+OPEN enters_cursor;
+FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @CName, @CText1;
+WHILE @@FETCH_STATUS = 0
+    BEGIN
+        --ГЕНЕРАЦИЯ  НАБОРА ПАРАМЕТРОВ ДЛЯ КАЖДОГО ТИПА ВЫХОДА --
+        DECLARE params_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_enters_params
+        OPEN params_cursor;
+        FETCH NEXT FROM params_cursor INTO @CUUID1, @CName, @CText1;
+        WHILE @@FETCH_STATUS = 0
+            BEGIN
+                IF @CName = 'device_address' OR @CName = 'number' OR @CName = 'user_number' OR @CName = 'contactId_zone'
+                    BEGIN
+                        SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'int');
+                    --print @CUUID2;
+                    END
+                IF @CName = 'name' OR @CName = 'description' OR @CName = 'type' OR @CName = 'tactic'
+                    BEGIN
+                        SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'nvarchar');
+                    END
+                 IF @CName = 'central_control_tactic' OR @CName = 'zone_day'
+                    BEGIN
+                        SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'bool');
+                    END
+                IF @CName = 'relay_control_delay' OR @CName = 'relay_control_time'
+                    BEGIN
+                        SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'float');
+                    END
+               -- IF (SELECT count(dde_SetX.SUUID) FROM dde_SetX WHERE SConcept = 2000600 AND  SOwner = @CUUID_enter_type_owner) <= 0
+                    INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
+                        VALUES (NEWID(), 2000700, @CUUID_enter_type_owner, @CName, @CUUID1, @CUUID2, NULL, NULL, @CText1);
+
+                --print @CUUID1;
+            FETCH NEXT FROM params_cursor INTO @CUUID1, @CName, @CText1;
+            END
+            close params_cursor;
+            DEALLOCATE params_cursor;
+       FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @CName, @CText1;
+    END
+CLOSE enters_cursor;
+deallocate enters_cursor;
+
+-- ГЕНЕРАЦИЯ ТИПОВ ПРИБОРОВ --
+DECLARE @CUUID_device_owner uniqueidentifier;
+DECLARE @CConcept_device bigint;
+DECLARE @Concept_device_params bigint = 2400; -- концепт для набора параметров прибора
 DECLARE cuuid_cursor cursor FOR SELECT CUUID, CConcept FROM dde_ConceptX WHERE CConcept IN (SELECT CFConceptExt FROM dde_ConfigX WHERE CFConceptExt >= 5000 AND CFConceptExt < 50000);
 
 OPEN cuuid_cursor;
 FETCH NEXT FROM cuuid_cursor INTO @CUUID_device_owner, @CConcept_device;
 WHILE @@FETCH_STATUS = 0
-    /*
-        TODO: сгенерировать набор параметров в зависимости от типа прибора
-    */
-    -- набор параметров в зависимости от типа прибора, надо придумать условие:
-    -- если CConcept = 10000, то ВСЕ + включаем параметр окно_времени
-         -- если CConcept = 15000, то ВСЕ + включаем параметр окно_времени + параметр группы_доступа
-    -- если CConcept = 13000 или 23000 или ..., то ВСЕ + включаем параметр трансляция
-    -- если CConcept = 80000, то ВСЕ + включаем параметр подключенные_кпб
    BEGIN
-       /* генерация наборов параметров */
+        /* ГЕНЕРАЦИЯ  НАБОРА ПАРАМЕТРОВ В ЗАВИСИМОСТИ ОТ ТИПА ПРИБОРА */
+        -- набор параметров в зависимости от типа прибора, надо придумать условие:
+        -- если CConcept = 10000, то ВСЕ + включаем параметр окно_времени
+             -- если CConcept = 15000, то ВСЕ + включаем параметр окно_времени + параметр группы_доступа
+        -- если CConcept = 13000 или 23000 или ..., то ВСЕ + включаем параметр трансляция
+        -- если CConcept = 80000, то ВСЕ + включаем параметр подключенные_кпб
    DECLARE params_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_device_params AND (
             CName = 'address' OR CName = 'name'
             OR CName = 'version' OR CName = 'd_index' OR CName = 'description'
@@ -100,7 +177,7 @@ WHILE @@FETCH_STATUS = 0
                 END
            -- ELSE
             print @CText1;
-            IF (SELECT count(dde_SetX.SUUID) FROM dde_SetX WHERE SConcept = 2000400 AND  SOwner = @CUUID_device_owner) <= 0
+           -- IF (SELECT count(dde_SetX.SUUID) FROM dde_SetX WHERE SConcept = 2000400 AND  SOwner = @CUUID_device_owner) <= 0
                 INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
                     VALUES (NEWID(), 2000400, @CUUID_device_owner, @CName, @CUUID1, @CUUID2, NULL, NULL, @CText1);
             FETCH NEXT FROM params_cursor INTO @CUUID1, @CName, @CText1;
@@ -109,16 +186,16 @@ WHILE @@FETCH_STATUS = 0
     DEALLOCATE params_cursor;
 
     /*
-     TODO: Сгенерировать набор входов для приборов различных по типу
+     TODO: Сгенерировать набор входов для приборов различных по типу; разные типы дефолтных входов ("выходное напряжение", "охранный" etc)
      */
      DECLARE @enter_count int;
        SET @enter_count =
        CASE
            WHEN @CConcept_device = 16000 THEN 127
        END
-    WHILE @enter_count > 0
+     WHILE @enter_count > 0
         BEGIN
-            print @enter_count;
+           -- print @enter_count;
 --               INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
 --                 VALUES (NEWID(), 2000500, @CUUID_device_owner, @CName, @CUUID1, @CUUID2, NULL, NULL, @CText1);
             SET @enter_count -=1;
