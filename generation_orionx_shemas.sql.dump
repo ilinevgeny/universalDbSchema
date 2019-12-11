@@ -5,7 +5,7 @@
 -- SELECT dde_ConceptX.CUUID from dde_ConceptX WHERE CConcept IN (SELECT CFConceptExt FROM dde_ConfigX WHERE CFConceptExt >= 5000 AND CFConceptExt < 50000);
 -- SELECT CFConceptExt FROM dde_ConfigX WHERE CFConceptExt > 5000 AND CFConcept < 50000;
 SELECT count(CUUID) FROM dde_ConceptX WHERE CConcept = 3600;
-
+SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2600 AND CName = 'Не управлять'
 -- IF (SELECT count(dde_SetX.SUUID) FROM dde_SetX WHERE SConcept = 2000400 AND SOwner = '00000000-0000-0000-0000-000000005101') <= 0
 --     print 'not exists';
 
@@ -29,12 +29,12 @@ GO
 
 DECLARE @CUUID1 uniqueidentifier;
 DECLARE @CUUID2 uniqueidentifier;
-DECLARE @CUUID3 uniqueidentifier;
+DECLARE @CUUID3 uniqueidentifier = NULL;
 DECLARE @CName nvarchar(MAX);
 DECLARE @CText1 nvarchar(MAX);
 
-/* Генерация концепта Тактики (2700) */
-
+/* Генерация концепта Тактики (2800) */
+-- INSERT INTO dde_ConfigX(CFUUID, CFConcept, CFConceptExt, CFName) VALUES ('00000000-0000-0000-0000-000000002800', 1, 2800, 'Тактики');
 
 DECLARE @Concept_enters_params bigint = 2500; -- концепт для набора входов прибора, по умолчанию - охранный
 DECLARE @Concept_enters bigint = 3600; -- концепт для набора входов прибора, по умолчанию - охранный
@@ -81,9 +81,11 @@ deallocate enters_cursor;
 
 
 -- ГЕНЕРАЦИЯ ТИПОВ ВЫХОДОВ (3700) --
-DECLARE enters_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_enters;
-DECLARE @CUUID_enter_type_owner uniqueidentifier;
 SET @Concept_enters = 3700;
+SET @Concept_enters_params = 2600;
+DECLARE enters_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_enters;
+--DECLARE @CUUID_enter_type_owner uniqueidentifier;
+
 OPEN enters_cursor;
 FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @CName, @CText1;
 WHILE @@FETCH_STATUS = 0
@@ -99,7 +101,7 @@ WHILE @@FETCH_STATUS = 0
                         SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'int');
                     --print @CUUID2;
                     END
-                IF @CName = 'name' OR @CName = 'description' OR @CName = 'type' OR @CName = 'tactic'
+                IF @CName = 'name' OR @CName = 'description' OR @CName = 'type'
                     BEGIN
                         SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'nvarchar');
                     END
@@ -111,10 +113,15 @@ WHILE @@FETCH_STATUS = 0
                     BEGIN
                         SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'float');
                     END
+                IF @CName = 'tactic'
+                    BEGIN
+                         SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'nvarchar');
+                         -- SET @CUUID3 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2800 AND CName = 'Не управлять');
+                    END
                -- IF (SELECT count(dde_SetX.SUUID) FROM dde_SetX WHERE SConcept = 2000600 AND  SOwner = @CUUID_enter_type_owner) <= 0
                     INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
-                        VALUES (NEWID(), 2000700, @CUUID_enter_type_owner, @CName, @CUUID1, @CUUID2, NULL, NULL, @CText1);
-
+                        VALUES (NEWID(), 2000700, @CUUID_enter_type_owner, @CName, @CUUID1, @CUUID2, @CUUID3, NULL, @CText1);
+                SET @CUUID3 = NULL;
                 --print @CUUID1;
             FETCH NEXT FROM params_cursor INTO @CUUID1, @CName, @CText1;
             END
@@ -171,15 +178,21 @@ WHILE @@FETCH_STATUS = 0
                     SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'int');
                     --print @CUUID2;
                 END
-            IF @CName = 'name' OR @CName = 'description' OR @CName = 'priority'
+            IF @CName = 'name' OR @CName = 'description'
                 BEGIN
                     SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'nvarchar');
                 END
+            IF @CName = 'priority'
+                BEGIN
+                    SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'nvarchar');
+                    SET @CUUID3 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 3500 AND CName = 'По умолчанию');
+                END
            -- ELSE
-            print @CText1;
+            -- print @CText1;
            -- IF (SELECT count(dde_SetX.SUUID) FROM dde_SetX WHERE SConcept = 2000400 AND  SOwner = @CUUID_device_owner) <= 0
                 INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
-                    VALUES (NEWID(), 2000400, @CUUID_device_owner, @CName, @CUUID1, @CUUID2, NULL, NULL, @CText1);
+                    VALUES (NEWID(), 2000400, @CUUID_device_owner, @CName, @CUUID1, @CUUID2, @CUUID3, NULL, @CText1);
+            SET @CUUID3 = NULL;
             FETCH NEXT FROM params_cursor INTO @CUUID1, @CName, @CText1;
         END
     close params_cursor;
@@ -188,27 +201,65 @@ WHILE @@FETCH_STATUS = 0
     /*
      TODO: Сгенерировать набор входов для приборов различных по типу; разные типы дефолтных входов ("выходное напряжение", "охранный" etc)
      */
-     DECLARE @enter_count int;
-       SET @enter_count =
-       CASE
-           WHEN @CConcept_device = 16000 THEN 127
-       END
-     WHILE @enter_count > 0
+    -- приборы, у которых есть входы берем из... первичного набора
+    IF(@CConcept_device = 16000)
         BEGIN
-           -- print @enter_count;
---               INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
---                 VALUES (NEWID(), 2000500, @CUUID_device_owner, @CName, @CUUID1, @CUUID2, NULL, NULL, @CText1);
-            SET @enter_count -=1;
+            print @CUUID_device_owner;
+            DECLARE @enter_count int;
+            SET @enter_count =
+            CASE
+               WHEN @CConcept_device = 16000 THEN 127
+            END
+            WHILE @enter_count > 0
+                BEGIN
+                   -- print @enter_count;
+                    SET @CUUID3 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 3600 AND CName = 'Охранный');
+                    --print @CUUID3;
+                      INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
+                        VALUES (NEWID(), 2000100, @CUUID_device_owner, '', NULL, NULL, @CUUID3, NULL, NULL);
+                    SET @enter_count -=1;
+                END
         END
---     DECLARE enters_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_enters_params AND CName = 'Охранный';
---     OPEN enters_cursor;
---     FETCH NEXT FROM enters_cursor INTO @CUUID1, @CName, @CText1;
---     close enters_cursor;
---     deallocate enters_cursor;
-    print @CUUID_device_owner;
+    -- print @CUUID_device_owner;
 
     FETCH NEXT FROM cuuid_cursor INTO @CUUID_device_owner, @CConcept_device;
    END;
 CLOSE cuuid_cursor;
 DEALLOCATE cuuid_cursor;
 
+-- SELECT
+-- --        a.DeviceType,
+--        --DI.Name,
+-- --        rl.Name,
+--        a.Name as enter
+--        ,t2.Name,
+--        t2.DeviceVersion
+--        --dTE.Name as device,
+--
+--     FROM dTypesElement a
+-- INNER JOIN DevItems DI on a.DeviceType = DI.GType
+-- INNER JOIN RSLines rl ON DI.DeviceID = rl.GIndex
+-- INNER JOIN (SELECT DeviceType, Name, DeviceVersion FROM dTypesElement WHERE ElementType = 4) t2 ON (t2.DeviceType) = rl.DeviceType
+--     AND t2.DeviceVersion = rl.DeviceVersion
+--     WHERE DI.ComputerID = 5
+--     AND a.ElementType = 3 -- id названий шлейфов в dTypesElement
+--     AND DI.ItemType = 3 -- шлейф в DevItems
+-- ORDER BY t2.Name, t2.DeviceVersion
+
+/*
+ 100	модификаций (записей в справочник прибора конкретного типа)
+1000	типов приборов
+
+Концепты нумеруются через 100, у каждого концепта может быть 99 записей с аккуратными UUID
+Концепты во всех таблицах сквозные, не повторяются
+Концепты экземпляров = концептам типов + 30 000 000
+от	до
+ 100    	 	 19,999,900    	справочники разные
+ 20,000,000    	 29,999,900    	наборы на справочниках
+ 30,000,000    	 39,999,900    	экземпляры
+ 40,000,000    	 49,999,900    	наборы на экземплярах
+ 50,000,000    	 59,999,900    	структуры деревьев
+ 60,000,000    	 99,999,900    	остальные концепты (дизайн формы справочника, метки полей,…)
+ 100,000,000    		концепты, создаваемые пользователями (или UUID ?)
+
+ */
