@@ -251,31 +251,59 @@ WHILE @@FETCH_STATUS = 0
     close enters_cursor;
     DEALLOCATE enters_cursor;
 
+         /*
+     TODO: Сгенерировать набор считывателей
+     */
+
+    DECLARE @RrName nvarchar(MAX);
+    DECLARE @RrDName nvarchar(MAX);
+    DECLARE @RrDVersion int;
+    DECLARE enters_cursor cursor FOR SELECT RName, DName, DVersion FROM export_readers WHERE DName = @CDeviceName;
+        OPEN enters_cursor;
+        FETCH NEXT FROM enters_cursor INTO @RrName, @RrDName, @RrDVersion;
+        WHILE @@FETCH_STATUS = 0
+            BEGIN
+                print @DName;
+                SET @CUUID1 = (SELECT CUUID FROM dde_ConceptX WHERE CConcept = 3800 AND CName = @RName);
+
+                INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
+                        VALUES (NEWID(), 2000300, @CUUID_device_owner, @RrName, @CUUID1, NULL, NULL, NULL, NULL);
+            FETCH NEXT FROM enters_cursor INTO @RrName, @RrDName, @RrDVersion;
+            END
+    close enters_cursor;
+    DEALLOCATE enters_cursor;
+
     -- print @CUUID_device_owner;
     FETCH NEXT FROM cuuid_cursor INTO @CUUID_device_owner, @CConcept_device, @CDeviceName;
    END;
 CLOSE cuuid_cursor;
 DEALLOCATE cuuid_cursor;
 
--- SELECT
--- --        a.DeviceType,
---        --DI.Name,
--- --        rl.Name,
---        a.Name as enter
---        ,t2.Name,
---        t2.DeviceVersion
---        --dTE.Name as device,
---
---     FROM dTypesElement a
--- INNER JOIN DevItems DI on a.DeviceType = DI.GType
--- INNER JOIN RSLines rl ON DI.DeviceID = rl.GIndex
--- INNER JOIN (SELECT DeviceType, Name, DeviceVersion FROM dTypesElement WHERE ElementType = 4) t2 ON (t2.DeviceType) = rl.DeviceType
---     AND t2.DeviceVersion = rl.DeviceVersion
---     WHERE DI.ComputerID = 5
---     AND a.ElementType = 3 -- id названий шлейфов в dTypesElement
---     AND DI.ItemType = 3 -- шлейф в DevItems
--- ORDER BY t2.Name, t2.DeviceVersion
+/*
+BEGIN
+DECLARE @ElementITemType int;
+SET @ElementITemType = 8;
+SELECT
+--        a.DeviceType,
+        rl.GIndex,
+       --DI.Name,
+--        rl.Name,
+       a.Name as enter
+       ,t2.Name,
+       t2.DeviceVersion
+       --dTE.Name as device,
 
+    FROM dTypesElement a
+INNER JOIN DevItems DI on a.DeviceType = DI.GType
+INNER JOIN RSLines rl ON DI.DeviceID = rl.GIndex
+INNER JOIN (SELECT DeviceType, Name, DeviceVersion FROM dTypesElement WHERE ElementType = 4) t2 ON (t2.DeviceType) = rl.DeviceType
+    AND t2.DeviceVersion = rl.DeviceVersion
+    WHERE DI.ComputerID = 5
+    AND a.ElementType = @ElementITemType-- id названий шлейфов в dTypesElement
+    AND DI.ItemType = @ElementITemType  -- шлейф в DevItems
+ORDER BY t2.Name, t2.DeviceVersion
+END
+*/
 /*
  100	модификаций (записей в справочник прибора конкретного типа)
 1000	типов приборов
