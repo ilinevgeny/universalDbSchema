@@ -30,7 +30,7 @@ GO
 -- DELETE FROM dde_SetX WHERE SConcept = 2000200
 -- DELETE FROM dde_SetX WHERE SConcept = 2000300
 
-DECLARE @insertable bit = 1;
+DECLARE @insertable bit = 0;
 DECLARE @CUUID1 uniqueidentifier;
 DECLARE @CUUID2 uniqueidentifier;
 DECLARE @CUUID3 uniqueidentifier = NULL;
@@ -48,6 +48,7 @@ DECLARE @SConcept_EntersParams_sets bigint  = 20000600;
 DECLARE @SConcept_RelayParams_sets bigint   = 20000700;
 DECLARE @SConcept_ReadersParams_sets bigint = 20000800;
 DECLARE @SConcept_DevicesParams_sets bigint = 20000400;
+DECLARE @SConcept_EventsDevice_sets bigint = 20000900;
 
 
 
@@ -274,9 +275,9 @@ WHILE @@FETCH_STATUS = 0
             BEGIN
                 print @DName;
                 SET @CUUID1 = (SELECT CUUID FROM dde_ConceptX WHERE CConcept = 3600 AND CName = @EName);
-
-                INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
-                        VALUES (NEWID(), 20000100, @CUUID_device_owner, @EName, @CUUID1, NULL, NULL, NULL, NULL);
+                IF(@insertable = 1)
+                    INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
+                            VALUES (NEWID(), 20000100, @CUUID_device_owner, @EName, @CUUID1, NULL, NULL, NULL, NULL);
             FETCH NEXT FROM enters_cursor INTO @EName, @DName, @DVersion;
             END
     close enters_cursor;
@@ -297,9 +298,9 @@ WHILE @@FETCH_STATUS = 0
             BEGIN
                 print @DName;
                 SET @CUUID1 = (SELECT CUUID FROM dde_ConceptX WHERE CConcept = 3700 AND CName = @RName);
-
-                INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
-                        VALUES (NEWID(), 20000200, @CUUID_device_owner, @RName, @CUUID1, NULL, NULL, NULL, NULL);
+                IF(@insertable = 1)
+                    INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
+                            VALUES (NEWID(), 20000200, @CUUID_device_owner, @RName, @CUUID1, NULL, NULL, NULL, NULL);
             FETCH NEXT FROM enters_cursor INTO @RName, @RDName, @RDVersion;
             END
     close enters_cursor;
@@ -319,10 +320,29 @@ WHILE @@FETCH_STATUS = 0
             BEGIN
                 print @DName;
                 SET @CUUID1 = (SELECT CUUID FROM dde_ConceptX WHERE CConcept = 3800 AND CName = @RName);
+                IF(@insertable = 1)
+                    INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
+                            VALUES (NEWID(), 20000300, @CUUID_device_owner, @RrName, @CUUID1, NULL, NULL, NULL, NULL);
+            FETCH NEXT FROM enters_cursor INTO @RrName, @RrDName, @RrDVersion;
+            END
+    close enters_cursor;
+    DEALLOCATE enters_cursor;
+
+/* ГЕНЕРАЦИЯ СОБЫТИЙ ПРИБОРОВ */
+    DECLARE @EvName nvarchar(MAX);
+    DECLARE @EvDName nvarchar(MAX);
+    DECLARE @EvDVersion int;
+    DECLARE enters_cursor cursor FOR SELECT EventName, DName, DVersion FROM export_devices_events WHERE DName = @CDeviceName;
+        OPEN enters_cursor;
+        FETCH NEXT FROM enters_cursor INTO @EvName, @EvDName, @EvDVersion;
+        WHILE @@FETCH_STATUS = 0
+            BEGIN
+                print @DName;
+                SET @CUUID1 = (SELECT CUUID FROM dde_ConceptX WHERE CConcept = 4000 AND CName = @EvName);
 
                 INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
-                        VALUES (NEWID(), 20000300, @CUUID_device_owner, @RrName, @CUUID1, NULL, NULL, NULL, NULL);
-            FETCH NEXT FROM enters_cursor INTO @RrName, @RrDName, @RrDVersion;
+                        VALUES (NEWID(), @SConcept_EventsDevice_sets, @CUUID_device_owner, @EvName, @CUUID1, NULL, NULL, NULL, NULL);
+            FETCH NEXT FROM enters_cursor INTO @EvName, @EvDName, @EvDVersion;
             END
     close enters_cursor;
     DEALLOCATE enters_cursor;
@@ -330,6 +350,8 @@ WHILE @@FETCH_STATUS = 0
     -- print @CUUID_device_owner;
     FETCH NEXT FROM cuuid_cursor INTO @CUUID_device_owner, @CConcept_device, @CDeviceName;
    END;
+
+
 IF((SELECT count(distinct SOwner) FROM dde_SetX WHERE SConcept = 20000400) < (SELECT count(CUUID) FROM dde_ConceptX WHERE CConcept BETWEEN 5000 and 50000))
 print 'Error compare counting devices! Please, check your data.'
 CLOSE cuuid_cursor;
