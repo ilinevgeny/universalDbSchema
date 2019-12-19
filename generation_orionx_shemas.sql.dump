@@ -328,7 +328,7 @@ WHILE @@FETCH_STATUS = 0
     close enters_cursor;
     DEALLOCATE enters_cursor;
 
-/* ГЕНЕРАЦИЯ СОБЫТИЙ ПРИБОРОВ */
+/* ГЕНЕРАЦИЯ НАБОРОВ СОБЫТИЙ ПРИБОРОВ */
     DECLARE @EvName nvarchar(MAX);
     DECLARE @EvDName nvarchar(MAX);
     DECLARE @EvDVersion int;
@@ -337,9 +337,9 @@ WHILE @@FETCH_STATUS = 0
         FETCH NEXT FROM enters_cursor INTO @EvName, @EvDName, @EvDVersion;
         WHILE @@FETCH_STATUS = 0
             BEGIN
-                print @DName;
+               -- print @DName;
                 SET @CUUID1 = (SELECT CUUID FROM dde_ConceptX WHERE CConcept = 4000 AND CName = @EvName);
-
+                IF(@insertable = 1)
                 INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
                         VALUES (NEWID(), @SConcept_EventsDevice_sets, @CUUID_device_owner, @EvName, @CUUID1, NULL, NULL, NULL, NULL);
             FETCH NEXT FROM enters_cursor INTO @EvName, @EvDName, @EvDVersion;
@@ -351,27 +351,71 @@ WHILE @@FETCH_STATUS = 0
     FETCH NEXT FROM cuuid_cursor INTO @CUUID_device_owner, @CConcept_device, @CDeviceName;
    END;
 
+/* ГЕНЕРАЦИЯ НАБОРОВ СОБЫТИЙ Входов */
+   -- exec insert_exports export_enters_events, @CDeviceName, 20002100, @CUUID_device_owner, 4000;
+   exec insert_exports export_enters, @CDeviceName, 20002100, @CUUID_device_owner, 4000;
+
+/* ГЕНЕРАЦИЯ НАБОРОВ СОБЫТИЙ Выходов */
+
+/* ГЕНЕРАЦИЯ НАБОРОВ СОБЫТИЙ Считывателей */
 
 IF((SELECT count(distinct SOwner) FROM dde_SetX WHERE SConcept = 20000400) < (SELECT count(CUUID) FROM dde_ConceptX WHERE CConcept BETWEEN 5000 and 50000))
 print 'Error compare counting devices! Please, check your data.'
 CLOSE cuuid_cursor;
 DEALLOCATE cuuid_cursor;
+
+exec insert_exports export_enters, 'Сигнал 20М (last)', 20002100, null, 4000, 'EName', 'DName', 'DVersion';
+-- SELECT * FROM createSelectWithParams;
+--SELECT EName, DName, DVersion FROM [export_enters] WHERE DName= 'Сигнал 20М (last)';
+-- exec insert_exports 'dde_SetX';
+begin
+DECLARE @tbName LocTypeTable = [export_enters];
+select * from createSelect();
+end
+-- CREATE FUNCTION createSelect()
+-- returns TABLE
+-- AS RETURN (
+--         select * from export_enters
+-- )
+-- CREATE FUNCTION dbo.insert_export_events( )
+-- returns TABLE
+-- as
+--     RETURN (
+--         SELECT * FROM dde_ConceptX
+--         )
+-- go
+
+-- CREATE  PROCEDURE createSelectWithParams
+--     @sqlString nvarchar(MAX)
+--
+--     as
+--     BEGIN
+--         EXEC sp_executesql @sqlString
+--     end
+
+--cheking some details
 --SELECT count(distinct SOwner) FROM dde_SetX WHERE SConcept = 20000400
 --SELECT count(CUUID) FROM dde_ConceptX WHERE CConcept BETWEEN 5000 and 50000
--- SELECT distinct SOwner FROM dde_SetX WHERE SConcept = 20000400
+--SELECT distinct SOwner FROM dde_SetX WHERE SConcept = 20000400
+
 /*
+-- Query for select export enters, readers, relays information from OrionDB
+-- Enters = 3
+-- Relays = 9
+-- Readers = 8
+
 BEGIN
 DECLARE @ElementITemType int;
 SET @ElementITemType = 8;
 SELECT
---        a.DeviceType,
-        rl.GIndex,
-       --DI.Name,
---        rl.Name,
-       a.Name as enter
-       ,t2.Name,
-       t2.DeviceVersion
-       --dTE.Name as device,
+-- a.DeviceType,
+rl.GIndex,
+--DI.Name,
+--rl.Name,
+a.Name as enter
+,t2.Name,
+t2.DeviceVersion
+--dTE.Name as device,
 
     FROM dTypesElement a
 INNER JOIN DevItems DI on a.DeviceType = DI.GType
@@ -382,6 +426,37 @@ INNER JOIN (SELECT DeviceType, Name, DeviceVersion FROM dTypesElement WHERE Elem
     AND a.ElementType = @ElementITemType-- id названий шлейфов в dTypesElement
     AND DI.ItemType = @ElementITemType  -- шлейф в DevItems
 ORDER BY t2.Name, t2.DeviceVersion
+END
+*/
+
+/*
+-- Query for select export events from OrionDB
+BEGIN
+    -- ElementType:
+    -- 2 - zone events
+    -- 4 - device events
+    -- 3 - enter types event
+    -- 5 - camera types event
+    -- 8 - reader types event
+    -- 9 - relay types event
+    -- 11 - _access_ zone types event
+    -- 12 - door types event
+    -- 14 - С2000Р-РМ(?) events
+    -- 17 - group of zones events
+    -- 25 - videosystem events
+    -- 150 - keybox events
+    -- 151 - keybox _case_ events
+    -- 514 - channel of recognition
+
+    DECLARE  @ElementType int = 8;
+
+SELECT ev.Contents, dTE.Name, dTE.DeviceVersion FROM Events ev
+INNER JOIN EventGroupCont evgc ON evgc.EventID = ev.Event
+INNER JOIN dTypesElement dTE on evgc.EventGroupID = dTE.EventGroupID
+WHERE dTE.ElementType = @ElementType
+-- AND  dTE.Name like '%охранный%'
+ORDER BY dTE.Name, dTE.DeviceVersion
+--ORDER BY ev.Contents
 END
 */
 /*
