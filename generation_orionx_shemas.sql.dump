@@ -9,6 +9,7 @@ SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2600 AND CName = '�
 -- IF (SELECT count(dde_SetX.SUUID) FROM dde_SetX WHERE SConcept = 2000400 AND SOwner = '00000000-0000-0000-0000-000000005101') <= 0
 --     print 'not exists';
 SELECT distinct SConcept FROM dde_SetX;
+SELECT EntEvName, EntrName, EntrVersion FROM [export_enters_events] WHERE EntrName= 'Фантом-10'
 GO
 /*
     1. генерация наборов параметров для приборов, индентификаторами являются значения CName из ConceptX
@@ -26,9 +27,13 @@ GO
  */
 
 /* задаем общие переменные генерации */
--- DELETE FROM dde_SetX WHERE SConcept = 2000100
+-- DELETE FROM dde_SetX WHERE SConcept = 20000100
+-- DELETE FROM dde_SetX WHERE SConcept = 20000600
+-- DELETE FROM dde_SetX WHERE SConcept = 20000700
 -- DELETE FROM dde_SetX WHERE SConcept = 2000200
 -- DELETE FROM dde_SetX WHERE SConcept = 2000300
+-- DELETE FROM dde_SetX WHERE SConcept = 20002100
+-- DELETE FROM dde_SetX WHERE SConcept = 20002200
 
 DECLARE @insertable bit = 0;
 DECLARE @CUUID1 uniqueidentifier;
@@ -51,12 +56,12 @@ DECLARE @SConcept_DevicesParams_sets bigint = 20000400;
 DECLARE @SConcept_EventsDevice_sets bigint = 20000900;
 
 
-
 -- ГЕНЕРАЦИЯ ТИПОВ ВХОДА (3600) --
 DECLARE enters_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_enters;
 DECLARE @CUUID_enter_type_owner uniqueidentifier;
+DECLARE @EnterName nvarchar(MAX)
 OPEN enters_cursor;
-FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @CName, @CText1;
+FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @EnterName, @CText1;
 WHILE @@FETCH_STATUS = 0
     BEGIN
        --ГЕНЕРАЦИЯ  НАБОРА ПАРАМЕТРОВ ДЛЯ КАЖДОГО ТИПА ВХОДА --
@@ -88,7 +93,11 @@ WHILE @@FETCH_STATUS = 0
             END
             close params_cursor;
             DEALLOCATE params_cursor;
-       FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @CName, @CText1;
+
+       /* ГЕНЕРАЦИЯ НАБОРОВ СОБЫТИЙ Входов */
+
+--         exec insert_exports export_enters_events, @EnterName, 20002100, @CUUID_enter_type_owner, 4000, 'EntEvName', 'EntrName', 'EntrVersion';
+       FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @EnterName, @CText1;
    END
 CLOSE enters_cursor;
 deallocate enters_cursor;
@@ -97,8 +106,9 @@ deallocate enters_cursor;
 -- ГЕНЕРАЦИЯ ТИПОВ Считывателя (3800) --
 DECLARE enters_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_readers;
 DECLARE @CUUID_reader_type_owner uniqueidentifier;
+DECLARE @ReaderName nvarchar(MAX)
 OPEN enters_cursor;
-FETCH NEXT FROM enters_cursor INTO @CUUID_reader_type_owner, @CName, @CText1;
+FETCH NEXT FROM enters_cursor INTO @CUUID_reader_type_owner, @ReaderName, @CText1;
 WHILE @@FETCH_STATUS = 0
     BEGIN
        --ГЕНЕРАЦИЯ  НАБОРА ПАРАМЕТРОВ ДЛЯ КАЖДОГО ТИПА ВХОДА --
@@ -130,7 +140,8 @@ WHILE @@FETCH_STATUS = 0
             END
             close params_cursor;
             DEALLOCATE params_cursor;
-       FETCH NEXT FROM enters_cursor INTO @CUUID_reader_type_owner, @CName, @CText1;
+       exec insert_exports export_reader_events, @ReaderName, 20002300, @CUUID_reader_type_owner, 4000, 'ReaderEvName', 'ReaderName', 'ReaderVersion';
+       FETCH NEXT FROM enters_cursor INTO @CUUID_reader_type_owner, @ReaderName, @CText1;
    END
 CLOSE enters_cursor;
 deallocate enters_cursor;
@@ -141,9 +152,9 @@ SET @Concept_enters = 3700;
 SET @Concept_enters_params = 2600;
 DECLARE enters_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_enters;
 --DECLARE @CUUID_enter_type_owner uniqueidentifier;
-
+DECLARE @RelayName nvarchar(MAX)
 OPEN enters_cursor;
-FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @CName, @CText1;
+FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @RelayName, @CText1;
 WHILE @@FETCH_STATUS = 0
     BEGIN
         --ГЕНЕРАЦИЯ  НАБОРА ПАРАМЕТРОВ ДЛЯ КАЖДОГО ТИПА ВЫХОДА --
@@ -184,7 +195,8 @@ WHILE @@FETCH_STATUS = 0
             END
             close params_cursor;
             DEALLOCATE params_cursor;
-       FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @CName, @CText1;
+        --exec insert_exports export_relays_events, @RelayName, 20002200, @CUUID_enter_type_owner, 4000, 'RelEvName', 'RelName', 'RelVersion';
+       FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @RelayName, @CText1;
     END
 CLOSE enters_cursor;
 deallocate enters_cursor;
@@ -273,7 +285,6 @@ WHILE @@FETCH_STATUS = 0
         FETCH NEXT FROM enters_cursor INTO @EName, @DName, @DVersion;
         WHILE @@FETCH_STATUS = 0
             BEGIN
-                print @DName;
                 SET @CUUID1 = (SELECT CUUID FROM dde_ConceptX WHERE CConcept = 3600 AND CName = @EName);
                 IF(@insertable = 1)
                     INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
@@ -296,7 +307,6 @@ WHILE @@FETCH_STATUS = 0
         FETCH NEXT FROM enters_cursor INTO @RName, @RDName, @RDVersion;
         WHILE @@FETCH_STATUS = 0
             BEGIN
-                print @DName;
                 SET @CUUID1 = (SELECT CUUID FROM dde_ConceptX WHERE CConcept = 3700 AND CName = @RName);
                 IF(@insertable = 1)
                     INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
@@ -318,7 +328,6 @@ WHILE @@FETCH_STATUS = 0
         FETCH NEXT FROM enters_cursor INTO @RrName, @RrDName, @RrDVersion;
         WHILE @@FETCH_STATUS = 0
             BEGIN
-                print @DName;
                 SET @CUUID1 = (SELECT CUUID FROM dde_ConceptX WHERE CConcept = 3800 AND CName = @RName);
                 IF(@insertable = 1)
                     INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
@@ -337,7 +346,6 @@ WHILE @@FETCH_STATUS = 0
         FETCH NEXT FROM enters_cursor INTO @EvName, @EvDName, @EvDVersion;
         WHILE @@FETCH_STATUS = 0
             BEGIN
-               -- print @DName;
                 SET @CUUID1 = (SELECT CUUID FROM dde_ConceptX WHERE CConcept = 4000 AND CName = @EvName);
                 IF(@insertable = 1)
                 INSERT INTO dde_SetX (SUUID, SConcept, SOwner, SName, SUUID1, SUUID2, SUUID3, SInt1, SText1)
@@ -351,9 +359,7 @@ WHILE @@FETCH_STATUS = 0
     FETCH NEXT FROM cuuid_cursor INTO @CUUID_device_owner, @CConcept_device, @CDeviceName;
    END;
 
-/* ГЕНЕРАЦИЯ НАБОРОВ СОБЫТИЙ Входов */
-   -- exec insert_exports export_enters_events, @CDeviceName, 20002100, @CUUID_device_owner, 4000;
-   exec insert_exports export_enters, @CDeviceName, 20002100, @CUUID_device_owner, 4000;
+
 
 /* ГЕНЕРАЦИЯ НАБОРОВ СОБЫТИЙ Выходов */
 
@@ -364,14 +370,12 @@ print 'Error compare counting devices! Please, check your data.'
 CLOSE cuuid_cursor;
 DEALLOCATE cuuid_cursor;
 
-exec insert_exports export_enters, 'Сигнал 20М (last)', 20002100, null, 4000, 'EName', 'DName', 'DVersion';
+
+-- exec insert_exports export_enters_events, null, 20002100, '00000000-0000-0000-0000-000000003744' , 4000, 'EntEvName', 'EntrName', 'EntrVersion';
 -- SELECT * FROM createSelectWithParams;
 --SELECT EName, DName, DVersion FROM [export_enters] WHERE DName= 'Сигнал 20М (last)';
 -- exec insert_exports 'dde_SetX';
-begin
-DECLARE @tbName LocTypeTable = [export_enters];
-select * from createSelect();
-end
+
 -- CREATE FUNCTION createSelect()
 -- returns TABLE
 -- AS RETURN (
