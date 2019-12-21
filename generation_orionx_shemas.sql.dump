@@ -10,6 +10,10 @@ SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2600 AND CName = '�
 --     print 'not exists';
 SELECT distinct SConcept FROM dde_SetX;
 SELECT EntEvName, EntrName, EntrVersion FROM [export_enters_events] WHERE EntrName= 'Фантом-10'
+
+SELECT distinct dstx.SConcept, dde_ConfigX.CFName FROM dde_SetX dstx INNER JOIN dde_ConfigX ON dstx.SConcept = dde_ConfigX.CFConceptExt ORDER BY SConcept;
+SELECT ReaderEvName, ReaderName, ReaderVersion FROM [export_reader_events] WHERE ReaderName= 'Считыватель' ORDER BY ReaderEvName;
+SELECT * FROM [export_enters_events] WHERE EntrName= 'FMW-3/2 PC';
 GO
 /*
     1. генерация наборов параметров для приборов, индентификаторами являются значения CName из ConceptX
@@ -19,8 +23,9 @@ GO
     + TODO: сгенерировать набор для типов входов
     + TODO: сгенерировать наборы приборов со входами (условие количества входов - тип прибора), дефолтный тип входа - у каждого прибора свой
     + TODO: сгенерировать наборы приборов с выходами (разница в типах выходов)
-    TODO: сгенерировать наборы считывателей (уточнить ТИП считывателя)
+    + TODO: сгенерировать наборы считывателей (уточнить ТИП считывателя)
     TODO: проверка на наличие записей наборов (типов входов, типов выходов, считывателей, типов приборов), каждый запуск должен только добавлять из ConceptX
+    TODO: сделать генерацию наборов входов, выходов, считывателей процедурой на вход процедура принимает концепты наборов и концепты типов
 
     -- тактика - отдельный концепт
     -- задержка управления реле (relay_control_delay), время управления реле(relay_control_time) (выход): тип float, значение кратно 0,125 мс, в АБД значения округляются
@@ -35,7 +40,9 @@ GO
 -- DELETE FROM dde_SetX WHERE SConcept = 20002100
 -- DELETE FROM dde_SetX WHERE SConcept = 20002200
 
-DECLARE @insertable bit = 0;
+/* для каждого этапа флаг записи, записывается по условию */
+DECLARE @insertable bit = 1;
+
 DECLARE @CUUID1 uniqueidentifier;
 DECLARE @CUUID2 uniqueidentifier;
 DECLARE @CUUID3 uniqueidentifier = NULL;
@@ -47,14 +54,13 @@ DECLARE @CText1 nvarchar(MAX);
 
 DECLARE @Concept_enters_params bigint = 2500; -- концепт для набора входов прибора, по умолчанию - охранный
 DECLARE @Concept_enters bigint = 3600; -- концепт для набора входов прибора, по умолчанию - охранный
-DECLARE @Concept_readers bigint = 3800; -- концепт для набора входов прибора, по умолчанию - охранный
+
 DECLARE @Concept_reader_params bigint = 2700; -- концепт для набора входов прибора, по умолчанию - охранный
 DECLARE @SConcept_EntersParams_sets bigint  = 20000600;
 DECLARE @SConcept_RelayParams_sets bigint   = 20000700;
 DECLARE @SConcept_ReadersParams_sets bigint = 20000800;
 DECLARE @SConcept_DevicesParams_sets bigint = 20000400;
 DECLARE @SConcept_EventsDevice_sets bigint = 20000900;
-
 
 -- ГЕНЕРАЦИЯ ТИПОВ ВХОДА (3600) --
 DECLARE enters_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_enters;
@@ -95,18 +101,18 @@ WHILE @@FETCH_STATUS = 0
             DEALLOCATE params_cursor;
 
        /* ГЕНЕРАЦИЯ НАБОРОВ СОБЫТИЙ Входов */
-
---         exec insert_exports export_enters_events, @EnterName, 20002100, @CUUID_enter_type_owner, 4000, 'EntEvName', 'EntrName', 'EntrVersion';
+       IF(@insertable = 1)
+        exec insert_exports export_enters_events, @EnterName, 20002100, @CUUID_enter_type_owner, 4000, 'EntEvName', 'EntrName', 'EntrVersion';
        FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @EnterName, @CText1;
    END
 CLOSE enters_cursor;
 deallocate enters_cursor;
 
-
 -- ГЕНЕРАЦИЯ ТИПОВ Считывателя (3800) --
+DECLARE @Concept_readers bigint = 3800; -- концепт cчитывателя
 DECLARE enters_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_readers;
 DECLARE @CUUID_reader_type_owner uniqueidentifier;
-DECLARE @ReaderName nvarchar(MAX)
+DECLARE @ReaderName nvarchar(MAX);
 OPEN enters_cursor;
 FETCH NEXT FROM enters_cursor INTO @CUUID_reader_type_owner, @ReaderName, @CText1;
 WHILE @@FETCH_STATUS = 0
@@ -140,7 +146,9 @@ WHILE @@FETCH_STATUS = 0
             END
             close params_cursor;
             DEALLOCATE params_cursor;
-       exec insert_exports export_reader_events, @ReaderName, 20002300, @CUUID_reader_type_owner, 4000, 'ReaderEvName', 'ReaderName', 'ReaderVersion';
+       /* ГЕНЕРАЦИЯ НАБОРОВ СОБЫТИЙ Считывателей */
+       IF(@insertable = 1)
+        exec insert_exports export_reader_events, @ReaderName, 20002300, @CUUID_reader_type_owner, 4000, 'ReaderEvName', 'ReaderName', 'ReaderVersion';
        FETCH NEXT FROM enters_cursor INTO @CUUID_reader_type_owner, @ReaderName, @CText1;
    END
 CLOSE enters_cursor;
@@ -183,7 +191,7 @@ WHILE @@FETCH_STATUS = 0
                 IF @CName = 'tactic'
                     BEGIN
                          SET @CUUID2 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2000 AND CName = 'nvarchar');
-                         -- SET @CUUID3 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2800 AND CName = 'Не управлять');
+                         SET @CUUID3 = (SELECT dde_ConceptX.CUUID FROM dde_ConceptX WHERE CConcept = 2800 AND CName = 'Не управлять');
                     END
                -- IF (SELECT count(dde_SetX.SUUID) FROM dde_SetX WHERE SConcept = 2000600 AND  SOwner = @CUUID_enter_type_owner) <= 0
                 IF(@insertable = 1)
@@ -195,11 +203,14 @@ WHILE @@FETCH_STATUS = 0
             END
             close params_cursor;
             DEALLOCATE params_cursor;
-        --exec insert_exports export_relays_events, @RelayName, 20002200, @CUUID_enter_type_owner, 4000, 'RelEvName', 'RelName', 'RelVersion';
+        /* ГЕНЕРАЦИЯ НАБОРОВ СОБЫТИЙ Выходов */
+        IF(@insertable = 1)
+        exec insert_exports export_relays_events, @RelayName, 20002200, @CUUID_enter_type_owner, 4000, 'RelEvName', 'RelName', 'RelVersion';
        FETCH NEXT FROM enters_cursor INTO @CUUID_enter_type_owner, @RelayName, @CText1;
     END
 CLOSE enters_cursor;
 deallocate enters_cursor;
+
 
 -- ГЕНЕРАЦИЯ ТИПОВ ПРИБОРОВ --
 DECLARE @CUUID_device_owner uniqueidentifier;
@@ -269,13 +280,7 @@ WHILE @@FETCH_STATUS = 0
     close params_cursor;
     DEALLOCATE params_cursor;
 
-        /*
-        TODO: сделать генерация наборов входов, выходов, считывателей процедурой
-        на вход процедура принимает концепты наборов и концепты типов
-        */
-    /*
-     TODO: Сгенерировать набор входов для приборов различных по типу; разные типы дефолтных входов ("выходное напряжение", "охранный" etc)
-     */
+    /* TODO: Сгенерировать набор входов для приборов различных по типу; разные типы дефолтных входов ("выходное напряжение", "охранный" etc) */
     -- входы приборов пока берем из первичной(-ых) таблицы
     DECLARE @EName nvarchar(MAX);
     DECLARE @DName nvarchar(MAX);
@@ -295,9 +300,7 @@ WHILE @@FETCH_STATUS = 0
     DEALLOCATE enters_cursor;
 
 
-     /*
-     TODO: Сгенерировать набор выходов
-     */
+     /* TODO: Сгенерировать набор выходов */
 
     DECLARE @RName nvarchar(MAX);
     DECLARE @RDName nvarchar(MAX);
@@ -316,9 +319,7 @@ WHILE @@FETCH_STATUS = 0
     close enters_cursor;
     DEALLOCATE enters_cursor;
 
-         /*
-     TODO: Сгенерировать набор считывателей
-     */
+    /* TODO: Сгенерировать набор считывателей */
 
     DECLARE @RrName nvarchar(MAX);
     DECLARE @RrDName nvarchar(MAX);
@@ -337,7 +338,7 @@ WHILE @@FETCH_STATUS = 0
     close enters_cursor;
     DEALLOCATE enters_cursor;
 
-/* ГЕНЕРАЦИЯ НАБОРОВ СОБЫТИЙ ПРИБОРОВ */
+    /* ГЕНЕРАЦИЯ НАБОРОВ СОБЫТИЙ ПРИБОРОВ */
     DECLARE @EvName nvarchar(MAX);
     DECLARE @EvDName nvarchar(MAX);
     DECLARE @EvDVersion int;
@@ -358,12 +359,6 @@ WHILE @@FETCH_STATUS = 0
     -- print @CUUID_device_owner;
     FETCH NEXT FROM cuuid_cursor INTO @CUUID_device_owner, @CConcept_device, @CDeviceName;
    END;
-
-
-
-/* ГЕНЕРАЦИЯ НАБОРОВ СОБЫТИЙ Выходов */
-
-/* ГЕНЕРАЦИЯ НАБОРОВ СОБЫТИЙ Считывателей */
 
 IF((SELECT count(distinct SOwner) FROM dde_SetX WHERE SConcept = 20000400) < (SELECT count(CUUID) FROM dde_ConceptX WHERE CConcept BETWEEN 5000 and 50000))
 print 'Error compare counting devices! Please, check your data.'
@@ -463,9 +458,11 @@ ORDER BY dTE.Name, dTE.DeviceVersion
 --ORDER BY ev.Contents
 END
 */
+
+
 /*
- 100	модификаций (записей в справочник прибора конкретного типа)
-1000	типов приборов
+    100	модификаций (записей в справочник прибора конкретного типа)
+    1000	типов приборов
 
 Концепты нумеруются через 100, у каждого концепта может быть 99 записей с аккуратными UUID
 Концепты во всех таблицах сквозные, не повторяются
