@@ -55,12 +55,12 @@ DECLARE @CText1 nvarchar(MAX);
 DECLARE @Concept_enters_params bigint = 2500; -- концепт для набора входов прибора, по умолчанию - охранный
 DECLARE @Concept_enters bigint = 3600; -- концепт для набора входов прибора, по умолчанию - охранный
 
-DECLARE @Concept_reader_params bigint = 2700; -- концепт для набора входов прибора, по умолчанию - охранный
+DECLARE @Concept_reader_params bigint       = 2700; -- концепт для набора входов прибора, по умолчанию - охранный
 DECLARE @SConcept_EntersParams_sets bigint  = 20000600;
 DECLARE @SConcept_RelayParams_sets bigint   = 20000700;
 DECLARE @SConcept_ReadersParams_sets bigint = 20000800;
 DECLARE @SConcept_DevicesParams_sets bigint = 20000400;
-DECLARE @SConcept_EventsDevice_sets bigint = 20000900;
+DECLARE @SConcept_EventsDevice_sets bigint  = 20000900;
 
 -- ГЕНЕРАЦИЯ ТИПОВ ВХОДА (3600) --
 DECLARE enters_cursor cursor FOR SELECT CUUID, CName, CText1 FROM dde_ConceptX WHERE CConcept = @Concept_enters;

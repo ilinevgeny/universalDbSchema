@@ -944,7 +944,7 @@ INSERT INTO Vega2.dbo.dde_ConfigX (CFUUID, CFConcept, CFConceptExt, CFName) VALU
 INSERT INTO Vega2.dbo.dde_ConfigX (CFUUID, CFConcept, CFConceptExt, CFName) VALUES ('00000000-0000-0000-0000-000002000200', 2, 20000200, 'Набор выходов');
 INSERT INTO Vega2.dbo.dde_ConfigX (CFUUID, CFConcept, CFConceptExt, CFName) VALUES ('00000000-0000-0000-0000-000002000300', 2, 20000300, 'Набор считывателей');
 INSERT INTO Vega2.dbo.dde_ConfigX (CFUUID, CFConcept, CFConceptExt, CFName) VALUES ('00000000-0000-0000-0000-000002000400', 2, 20000400, 'Набор параметров приборов');
-INSERT INTO Vega2.dbo.dde_ConfigX (CFUUID, CFConcept, CFConceptExt, CFName) VALUES ('00000000-0000-0000-0000-000000006000', 1, 6000, 'РИПы 12');
+INSERT INTO Vega2.dbo.dde_ConfigX (CFUUID, CFConcept, CFConceptExt, CFName) VALUES ('00000000-0000-0000-0000-000000006000', 1, 6000, 'РИПы');
 INSERT INTO Vega2.dbo.dde_ConfigX (CFUUID, CFConcept, CFConceptExt, CFName) VALUES ('00000000-0000-0000-0000-000060000000', 3, 60000000, 'Коды соответствия Веги и Орион Про');
 INSERT INTO Vega2.dbo.dde_ConfigX (CFUUID, CFConcept, CFConceptExt, CFName) VALUES ('00000000-0000-0000-0000-000000012000', 1, 12000, 'С2000-БКИ');
 INSERT INTO Vega2.dbo.dde_ConfigX (CFUUID, CFConcept, CFConceptExt, CFName) VALUES ('00000000-0000-0000-0000-000000013000', 1, 13000, 'C2000-К');
